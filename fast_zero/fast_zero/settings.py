@@ -2,8 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict( 
+    model_config = SettingsConfigDict(
         env_file='.env', env_file_encoding='utf-8'
     )
-    
-    DATABASE_URL: str = "sqlite:///database.db" 
+
+    DATABASE_URL: str = 'sqlite:///database.db'
