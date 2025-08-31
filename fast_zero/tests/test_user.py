@@ -8,7 +8,7 @@ from fast_zero.security import verify_password
 from fast_zero.shemas import UserPublic
 
 
-def test_create_user(session, mock_db_time):
+async def test_create_user(session, mock_db_time):
     with mock_db_time(model=User) as time:
         new_user = User(
             username='Alice',
@@ -16,9 +16,9 @@ def test_create_user(session, mock_db_time):
             email='test@test.com',
         )
         session.add(new_user)
-        session.commit()
+        await session.commit()
 
-    user = session.scalar(select(User).where(User.username == 'Alice'))
+    user = await session.scalar(select(User).where(User.username == 'Alice'))
 
     assert asdict(user) == {
         'id': 1,
@@ -30,19 +30,19 @@ def test_create_user(session, mock_db_time):
     }
 
 
-def test_list_users(client):
+async def test_list_users(client):
     response = client.get('/users/')
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'users': []}
 
 
-def test_read_users_with_users(client, user):
+async def test_read_users_with_users(client, user):
     user_schema = UserPublic.model_validate(user).model_dump(mode='json')
     response = client.get('/users/')
     assert response.json() == {'users': [user_schema]}
 
 
-def test_update_users(client, user, mock_db_time, session, token):
+async def test_update_users(client, user, mock_db_time, session, token):
     with mock_db_time(model=User) as time:
         response = client.put(
             f'/users/{user.id}',
@@ -56,7 +56,7 @@ def test_update_users(client, user, mock_db_time, session, token):
 
     assert response.status_code == HTTPStatus.OK
 
-    updated_user = session.scalar(select(User).where(User.id == user.id))
+    updated_user = await session.scalar(select(User).where(User.id == user.id))
 
     assert updated_user.id == user.id
     assert updated_user.username == 'bob'
@@ -92,13 +92,13 @@ def test_update_integrity_error(client, user, token):
     }
 
 
-def test_delete_user(client, user, session, token):
+async def test_delete_user(client, user, session, token):
     response = client.delete(
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
-    user_db = session.scalar(select(User).where(User.id == user.id))
+    user_db = await session.scalar(select(User).where(User.id == user.id))
 
     assert response.status_code == HTTPStatus.OK
     assert user_db is None
